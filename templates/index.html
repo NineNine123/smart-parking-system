@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Smart Parking System</title>
+
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
+    <style>
+      /* =========================
+   QR POPUP MODAL
+========================= */
+      #modalParkingCanvas {
+        position: absolute;
+
+        top: 0;
+
+        left: 0;
+
+        width: 100%;
+
+        height: 100%;
+
+        z-index: 2;
+      }
+
+      #modalParkingImage {
+        width: 100%;
+
+        border-radius: 18px;
+
+        display: block;
+      }
+      .scanner-modal {
+        display: none;
+
+        position: fixed;
+
+        inset: 0;
+
+        background: rgba(0, 0, 0, 0.75);
+
+        z-index: 9999;
+
+        justify-content: center;
+
+        align-items: center;
+      }
+
+      .scanner-content {
+        background: #111827;
+
+        width: 500px;
+
+        max-width: 90vw;
+
+        padding: 20px;
+
+        border-radius: 24px;
+
+        border: 1px solid rgba(255, 255, 255, 0.1);
+
+        position: relative;
+      }
+
+      .scanner-header {
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: center;
+
+        margin-bottom: 16px;
+      }
+
+      .close-btn {
+        background: #ef4444;
+
+        color: white;
+
+        padding: 10px 16px;
+
+        border-radius: 12px;
+
+        font-size: 14px;
+      }
+
+      .close-btn:hover {
+        opacity: 0.9;
+      }
+
+      #reader {
+        width: 100%;
+
+        min-height: 320px;
+
+        overflow: hidden;
+
+        border-radius: 18px;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+
+        background: linear-gradient(135deg, #0f172a, #111827, #1e293b);
+
+        color: white;
+
+        min-height: 100vh;
+
+        padding: 30px;
+      }
+
+      .container {
+        max-width: 1400px;
+
+        margin: auto;
+      }
+
+      .topbar {
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: center;
+
+        margin-bottom: 25px;
+      }
+
+      .title-section h1 {
+        font-size: 38px;
+
+        font-weight: bold;
+
+        margin-bottom: 8px;
+      }
+
+      .title-section p {
+        color: #94a3b8;
+
+        font-size: 16px;
+      }
+
+      .card {
+        background: transparent;
+
+        border: 1px solid rgba(255, 255, 255, 0.08);
+
+        border-radius: 24px;
+
+        backdrop-filter: blur(8px);
+      }
+      .badge {
+        background: rgba(255, 255, 255, 0.1);
+
+        backdrop-filter: blur(10px);
+
+        padding: 12px 18px;
+
+        border-radius: 14px;
+
+        border: 1px solid rgba(255, 255, 255, 0.15);
+
+        font-size: 14px;
+      }
+
+      .main-grid {
+        display: grid;
+
+        grid-template-columns: 1fr 350px;
+
+        gap: 24px;
+      }
+
+      .parking-card {
+        padding: 20px;
+
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .sidebar {
+        padding: 24px;
+
+        display: flex;
+
+        flex-direction: column;
+
+        gap: 20px;
+      }
+
+      .section-title {
+        font-size: 18px;
+
+        margin-bottom: 14px;
+
+        font-weight: bold;
+      }
+
+      .parking-wrapper {
+        position: relative;
+
+        width: 100%;
+      }
+
+      #parkingImage {
+        width: 100%;
+
+        display: block;
+
+        border-radius: 18px;
+
+        position: relative;
+
+        z-index: 1;
+        opacity: 1;
+
+        filter: brightness(1.1);
+      }
+
+      #parkingCanvas {
+        position: absolute;
+
+        top: 0;
+        left: 0;
+
+        z-index: 2;
+
+        background: transparent;
+      }
+
+      #parkingCanvas {
+        position: absolute;
+
+        top: 0;
+
+        left: 0;
+
+        width: 100%;
+
+        height: 100%;
+
+        pointer-events: auto;
+        background: transparent;
+      }
+
+      .button-group {
+        display: flex;
+
+        flex-direction: column;
+
+        gap: 14px;
+      }
+
+      button {
+        border: none;
+
+        padding: 16px;
+
+        border-radius: 16px;
+
+        font-size: 16px;
+
+        font-weight: bold;
+
+        cursor: pointer;
+
+        transition: 0.25s;
+      }
+
+      .scan-btn {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+
+        color: white;
+      }
+
+      .scan-btn:hover {
+        transform: translateY(-2px);
+
+        opacity: 0.95;
+      }
+
+      .find-btn {
+        background: linear-gradient(135deg, #10b981, #059669);
+
+        color: white;
+      }
+
+      .find-btn:hover {
+        transform: translateY(-2px);
+
+        opacity: 0.95;
+      }
+      .status-slot {
+        font-size: 48px;
+
+        font-weight: 900;
+
+        text-align: center;
+
+        color: #00ffcc;
+
+        text-shadow: 0 0 10px rgba(0, 255, 204, 0.7);
+
+        margin: 12px 0;
+
+        letter-spacing: 3px;
+      }
+
+      .status-box {
+        background: rgba(0, 0, 0, 0.25);
+
+        padding: 18px;
+
+        border-radius: 18px;
+
+        min-height: 120px;
+
+        line-height: 1.7;
+
+        color: #e2e8f0;
+      }
+
+      #reader {
+        overflow: hidden;
+
+        border-radius: 18px;
+
+        display: none;
+      }
+
+      .legend {
+        display: flex;
+
+        gap: 18px;
+
+        margin-top: 10px;
+
+        flex-wrap: wrap;
+      }
+
+      .legend-item {
+        display: flex;
+
+        align-items: center;
+
+        gap: 8px;
+
+        font-size: 14px;
+      }
+
+      .legend-color {
+        width: 18px;
+
+        height: 18px;
+
+        border-radius: 5px;
+      }
+
+      .green {
+        background: rgba(0, 255, 0, 0.5);
+      }
+
+      .red {
+        background: rgba(255, 0, 0, 0.5);
+      }
+
+      @media (max-width: 1000px) {
+        .main-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .topbar {
+          flex-direction: column;
+
+          align-items: flex-start;
+
+          gap: 16px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="topbar">
+        <div class="title-section">
+          <h1>Smart Parking System</h1>
+
+          <p>Real-time parking monitoring and car locator</p>
+        </div>
+
+        <div class="badge">Live Monitoring Active</div>
+      </div>
+
+      <div class="main-grid">
+        <!-- LEFT -->
+
+        <div class="card parking-card">
+          <div class="section-title">Parking Map</div>
+
+          <div class="parking-wrapper">
+            <img
+              id="parkingImage"
+              src="/static/parking_layout.png"
+              alt="Parking Map"
+            />
+
+            <canvas id="parkingCanvas"></canvas>
+          </div>
+
+          <div class="legend">
+            <div class="legend-item">
+              <div class="legend-color green"></div>
+
+              Available
+            </div>
+
+            <div class="legend-item">
+              <div class="legend-color red"></div>
+
+              Occupied
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT -->
+
+        <div class="card sidebar">
+          <div>
+            <div class="section-title">Parking Actions</div>
+
+            <div class="button-group">
+              <button class="find-btn" onclick="enableSaveParkingMode()">
+                Save Parking
+              </button>
+              <button class="scan-btn" onclick="startQRScanner()">
+                Scan Parking QR
+              </button>
+
+              <button class="find-btn" onclick="getLocation()">
+                Find My Car
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <div class="section-title">Status</div>
+
+            <div class="status-box" id="statusText">Waiting for action...</div>
+          </div>
+
+          <!-- QR Scanner Popup -->
+
+          <div id="scannerModal" class="scanner-modal">
+            <div class="scanner-content">
+              <div class="scanner-header">
+                <h2>Scan Parking QR</h2>
+
+                <button class="close-btn" onclick="closeQRScanner()">
+                  Cancel
+                </button>
+              </div>
+
+              <div id="reader"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SAVE PARKING MODAL -->
+
+    <div id="saveParkingModal" class="scanner-modal">
+      <div class="scanner-content">
+        <div class="scanner-header">
+          <h2>Choose Your Parking</h2>
+
+          <button class="close-btn" onclick="closeSaveParkingModal()">✕</button>
+        </div>
+
+        <div class="parking-wrapper">
+          <img
+            id="modalParkingImage"
+            src="/static/parking_layout.png"
+            alt="Parking Map"
+          />
+
+          <canvas id="modalParkingCanvas"></canvas>
+        </div>
+
+        <button
+          id="confirmSaveBtn"
+          disabled
+          style="
+            width: 100%;
+            margin-top: 20px;
+            background: #475569;
+            color: white;
+            opacity: 0.6;
+          "
+          onclick="confirmSaveParking()"
+        >
+          Save Parking
+        </button>
+      </div>
+    </div>
+    <script src="/static/script.js"></script>
+  </body>
+</html>
