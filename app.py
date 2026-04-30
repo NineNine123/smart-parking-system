@@ -10,6 +10,7 @@ app = Flask(__name__)
 # =========================
 @app.route("/")
 def home():
+    
 
     user_id = request.args.get(
         "user_id"
@@ -47,6 +48,34 @@ def status():
 
     return jsonify(data)
 
+# =========================
+# UPDATE PARKING STATUS
+# =========================
+
+@app.route(
+    "/update_status",
+    methods=["POST"]
+)
+def update_status():
+
+    data = request.json
+
+    with open(
+        "parking_status.json",
+        "w"
+    ) as f:
+
+        json.dump(
+            data,
+            f,
+            indent=4
+        )
+
+    return jsonify({
+
+        "success": True
+
+    })
 
 # =========================
 # Map Slot Coordinates
